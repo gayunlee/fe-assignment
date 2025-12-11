@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { LoginPage } from '@/pages/login'
 import { RegisterPage } from '@/pages/register'
 import { HomePage } from '@/pages/home'
+import { ContentFormPage } from '@/pages/content-form'
 
 export const router = createBrowserRouter([
   {
@@ -18,11 +19,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/content/new',
-    element: <div>New Content Page (Protected)</div>,
+    element: <ContentFormPage />,
   },
   {
     path: '/content/:id/edit',
-    element: <div>Edit Content Page (Protected)</div>,
+    element: <ContentFormPage />,
   },
   {
     path: '/alarm/new',
