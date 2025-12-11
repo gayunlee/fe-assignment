@@ -3,6 +3,7 @@ import { LoginPage } from '@/pages/login'
 import { RegisterPage } from '@/pages/register'
 import { HomePage } from '@/pages/home'
 import { ContentFormPage } from '@/pages/content-form'
+import { AlarmFormPage } from '@/pages/alarm-form'
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,6 @@ export const router = createBrowserRouter([
   },
   {
     path: '/alarm/new',
-    element: <div>New Alarm Page (Protected)</div>,
+    element: <AlarmFormPage />,
   },
 ])
