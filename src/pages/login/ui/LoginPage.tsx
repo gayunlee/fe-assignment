@@ -1,26 +1,28 @@
 import { Link } from 'react-router-dom'
-import { useLoginForm, useLoginActions } from '@/features/auth/login'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { loginSchema, LoginFormValues, useLoginActions } from '@/features/auth/login'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 
 export function LoginPage() {
-  const { state, reducer } = useLoginForm()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  })
+
   const { action, state: actionState } = useLoginActions()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!reducer.validate()) {
-      return
-    }
-
-    action.submitLogin({
-      data: {
-        email: state.email,
-        password: state.password,
-      },
-    })
+  const onSubmit = (data: LoginFormValues) => {
+    action.submitLogin({ data })
   }
 
   return (
@@ -29,19 +31,18 @@ export function LoginPage() {
         <div className="bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold text-center mb-8">로그인</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">이메일</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="이메일을 입력해주세요"
-                value={state.email}
-                onChange={(e) => reducer.setEmail(e.target.value)}
-                aria-invalid={!!state.errors.email}
+                {...register('email')}
+                aria-invalid={!!errors.email}
               />
-              {state.errors.email && (
-                <p className="text-sm text-red-500">{state.errors.email}</p>
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
               )}
             </div>
 
@@ -51,12 +52,11 @@ export function LoginPage() {
                 id="password"
                 type="password"
                 placeholder="비밀번호를 입력해주세요"
-                value={state.password}
-                onChange={(e) => reducer.setPassword(e.target.value)}
-                aria-invalid={!!state.errors.password}
+                {...register('password')}
+                aria-invalid={!!errors.password}
               />
-              {state.errors.password && (
-                <p className="text-sm text-red-500">{state.errors.password}</p>
+              {errors.password && (
+                <p className="text-sm text-red-500">{errors.password.message}</p>
               )}
             </div>
 

@@ -1,25 +1,33 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useRegisterForm, useRegister } from '@/features/auth/register'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { registerSchema, RegisterFormValues, useRegister } from '@/features/auth/register'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 
 export function RegisterPage() {
   const navigate = useNavigate()
-  const { state, reducer } = useRegisterForm()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  })
+
   const { mutate: registerMutate, isPending, error } = useRegister()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!reducer.validate()) {
-      return
-    }
-
+  const onSubmit = (data: RegisterFormValues) => {
     registerMutate(
       {
-        email: state.email,
-        password: state.password,
+        email: data.email,
+        password: data.password,
       },
       {
         onSuccess: () => {
@@ -35,19 +43,18 @@ export function RegisterPage() {
         <div className="bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold text-center mb-8">회원가입</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">이메일</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="이메일을 입력해주세요"
-                value={state.email}
-                onChange={(e) => reducer.setEmail(e.target.value)}
-                aria-invalid={!!state.errors.email}
+                {...register('email')}
+                aria-invalid={!!errors.email}
               />
-              {state.errors.email && (
-                <p className="text-sm text-red-500">{state.errors.email}</p>
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
               )}
             </div>
 
@@ -57,12 +64,11 @@ export function RegisterPage() {
                 id="password"
                 type="password"
                 placeholder="비밀번호를 입력해주세요 (6자 이상)"
-                value={state.password}
-                onChange={(e) => reducer.setPassword(e.target.value)}
-                aria-invalid={!!state.errors.password}
+                {...register('password')}
+                aria-invalid={!!errors.password}
               />
-              {state.errors.password && (
-                <p className="text-sm text-red-500">{state.errors.password}</p>
+              {errors.password && (
+                <p className="text-sm text-red-500">{errors.password.message}</p>
               )}
             </div>
 
@@ -72,12 +78,11 @@ export function RegisterPage() {
                 id="confirmPassword"
                 type="password"
                 placeholder="비밀번호를 다시 입력해주세요"
-                value={state.confirmPassword}
-                onChange={(e) => reducer.setConfirmPassword(e.target.value)}
-                aria-invalid={!!state.errors.confirmPassword}
+                {...register('confirmPassword')}
+                aria-invalid={!!errors.confirmPassword}
               />
-              {state.errors.confirmPassword && (
-                <p className="text-sm text-red-500">{state.errors.confirmPassword}</p>
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
               )}
             </div>
 
