@@ -4,11 +4,16 @@ import { RegisterPage } from '@/pages/register'
 import { HomePage } from '@/pages/home'
 import { ContentFormPage } from '@/pages/content-form'
 import { AlarmFormPage } from '@/pages/alarm-form'
+import { ProtectedRoute } from '../providers/ProtectedRoute'
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomePage />,
+    element: (
+      <ProtectedRoute>
+        <HomePage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/login',
@@ -20,14 +25,26 @@ export const router = createBrowserRouter([
   },
   {
     path: '/content/new',
-    element: <ContentFormPage />,
+    element: (
+      <ProtectedRoute>
+        <ContentFormPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/content/:id/edit',
-    element: <ContentFormPage />,
+    element: (
+      <ProtectedRoute>
+        <ContentFormPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/alarm/new',
-    element: <AlarmFormPage />,
+    element: (
+      <ProtectedRoute>
+        <AlarmFormPage />
+      </ProtectedRoute>
+    ),
   },
 ])
