@@ -1,0 +1,78 @@
+Convention
+
+## API
+
+- 아래 swagger 문서로 get 요청을 보낸후, 응답받은 schema를 참고
+  - http://fe-assignment-api.us-insight.com/swagger/doc.json
+- 해당 schema를 참고해 타입과 인터페이스를 작성
+- api 함수와 쿼리훅 작성
+
+### API 함수
+
+#### 공통 fetch 함수
+
+- fetch를 랩핑한 공통 api 요청 util함수 구현
+  - 공통 에러처리 및 인증토큰 갱신 등의 처리를 내부로직에서 구현합니다.
+- 해당 util함수를 사용해 api 엔드포인트별 호출 함수를 구현합니다.
+
+아래 예시와 같이 작성:
+ex)
+
+export const getCommunityCategory = async (masterId: string) => {
+return await http.get<CommunityCategoryResponse>(`/v1/master/${masterId}/community/category`);
+};
+
+### 쿼리 훅
+
+- Tanstack Query를 사용해 api 함수를 사용한 쿼리훅을 작성합니다.
+
+ex)
+
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { getUserPostList } from '../api';
+import { userPostKeys } from './queryKey';
+
+export const useUserPostList = ({
+userId,
+offsetId,
+limit,
+}: {
+userId: string;
+offsetId: string;
+limit: number;
+}) => {
+return useInfiniteQuery({
+...userPostKeys.all({ userId, offsetId, limit }),
+queryFn: ({ pageParam }) => getUserPostList(userId, pageParam, limit),
+getNextPageParam: (lastPage) => {
+const { posts } = lastPage;
+
+      if (posts.length === 0) {
+        return undefined;
+      }
+
+      return posts[posts.length - 1]?.id || '';
+    },
+    initialPageParam: '',
+
+});
+};
+
+#### 쿼리키
+
+- @lukemorales/query-key-factory를 사용
+
+ex)
+
+import { createQueryKeyStore } from '@lukemorales/query-key-factory'
+
+export const queryKeys = createQueryKeyStore({
+users: null,
+todos: {
+detail: (todoId: string) => [todoId],
+list: (filters: TodoFilters) => ({
+queryKey: [{ filters }],
+queryFn: (ctx) => api.getTodos({ filters, page: ctx.pageParam }),
+}),
+},
+})
