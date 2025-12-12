@@ -1,9 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useGetContentList } from '@/entities/content'
 import { ContentListItem } from './ContentListItem'
 import type { ContentListProps } from '../model/types'
 
 export function ContentList({ category }: ContentListProps) {
+  const navigate = useNavigate()
   const observerRef = useRef<HTMLDivElement>(null)
   const {
     data,
@@ -38,8 +40,7 @@ export function ContentList({ category }: ContentListProps) {
   }, [handleObserver])
 
   const handleContentClick = (id: number) => {
-    console.log('Content clicked:', id)
-    // TODO: Navigate to content edit page
+    navigate(`/content/${id}/edit`)
   }
 
   if (isLoading) {
