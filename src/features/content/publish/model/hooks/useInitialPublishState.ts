@@ -19,8 +19,8 @@ interface UseInitialPublishStateResult {
 /**
  * API 응답을 기반으로 InitialPublishState 계산
  * - status: 'public' → visibility: 'public'
- * - status: 'private' + isScheduled: true → visibility: 'scheduled'
- * - status: 'private' + isScheduled: false → visibility: 'private'
+ * - status: 'private' + is_scheduled: true → visibility: 'scheduled'
+ * - status: 'private' + is_scheduled: false → visibility: 'private'
  */
 export function calculateInitialPublishState(
   content: Content | undefined,
@@ -31,13 +31,13 @@ export function calculateInitialPublishState(
   }
 
   const { status } = content
-  const { isScheduled, publishedAt } = schedule
+  const { is_scheduled, published_at } = schedule
 
   // private 상태이고 예약 발행이 설정된 경우 → 예약 발행
-  if (status === 'private' && isScheduled) {
+  if (status === 'private' && is_scheduled) {
     return {
       visibility: 'scheduled',
-      scheduledAt: publishedAt,
+      scheduledAt: published_at,
     }
   }
 
@@ -63,8 +63,8 @@ export function calculateInitialPublishState(
 /**
  * API 응답을 기반으로 ExistingContentState 계산
  * - status: 'public' → 'public'
- * - status: 'private' + isScheduled: true → 'scheduled'
- * - status: 'private' + isScheduled: false → 'private'
+ * - status: 'private' + is_scheduled: true → 'scheduled'
+ * - status: 'private' + is_scheduled: false → 'private'
  */
 export function calculatePreviousState(
   content: Content | undefined,
@@ -75,10 +75,10 @@ export function calculatePreviousState(
   }
 
   const { status } = content
-  const { isScheduled } = schedule
+  const { is_scheduled } = schedule
 
   // private 상태이고 예약 발행이 설정된 경우 → scheduled
-  if (status === 'private' && isScheduled) {
+  if (status === 'private' && is_scheduled) {
     return 'scheduled'
   }
 

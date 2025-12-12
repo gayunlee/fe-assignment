@@ -34,8 +34,9 @@ function createMockContent(overrides: Partial<Content> = {}): Content {
 // Mock ContentSchedule 생성 헬퍼
 function createMockSchedule(overrides: Partial<ContentSchedule> = {}): ContentSchedule {
   return {
-    isScheduled: false,
-    publishedAt: null,
+    content_id: 1,
+    is_scheduled: false,
+    published_at: null,
     ...overrides,
   }
 }
@@ -63,8 +64,8 @@ describe('calculateInitialPublishState', () => {
   it('status가 private이고 is_scheduled가 true이면 예약발행', () => {
     const content = createMockContent({ status: 'private' })
     const schedule = createMockSchedule({
-      isScheduled: true,
-      publishedAt: '2024-06-01T10:00:00Z',
+      is_scheduled: true,
+      published_at: '2024-06-01T10:00:00Z',
     })
 
     const result = calculateInitialPublishState(content, schedule)
@@ -75,7 +76,7 @@ describe('calculateInitialPublishState', () => {
 
   it('status가 private이고 is_scheduled가 false이면 비공개', () => {
     const content = createMockContent({ status: 'private' })
-    const schedule = createMockSchedule({ isScheduled: false })
+    const schedule = createMockSchedule({ is_scheduled: false })
 
     const result = calculateInitialPublishState(content, schedule)
 
@@ -105,7 +106,7 @@ describe('calculatePreviousState', () => {
 
   it('status가 private이고 is_scheduled가 true이면 scheduled', () => {
     const content = createMockContent({ status: 'private' })
-    const schedule = createMockSchedule({ isScheduled: true })
+    const schedule = createMockSchedule({ is_scheduled: true })
 
     const result = calculatePreviousState(content, schedule)
 
@@ -114,7 +115,7 @@ describe('calculatePreviousState', () => {
 
   it('status가 private이고 is_scheduled가 false이면 private', () => {
     const content = createMockContent({ status: 'private' })
-    const schedule = createMockSchedule({ isScheduled: false })
+    const schedule = createMockSchedule({ is_scheduled: false })
 
     const result = calculatePreviousState(content, schedule)
 

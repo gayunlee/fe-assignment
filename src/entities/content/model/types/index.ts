@@ -44,8 +44,9 @@ export interface ContentListParams {
 }
 
 export interface ContentSchedule {
-  isScheduled: boolean
-  publishedAt: string | null
+  content_id: number
+  is_scheduled: boolean
+  published_at: string | null
 }
 
 export interface ContentScheduleResponse {
