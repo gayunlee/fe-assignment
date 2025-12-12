@@ -8,7 +8,6 @@ export const publishOptionsSchema = z
     alarmTarget: z.enum(['all', 'follower', 'member']),
     alarmTitleStrategy: z.enum(['content-title', 'custom']),
     alarmCustomTitle: z.string().optional(),
-    alarmBody: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -20,18 +19,6 @@ export const publishOptionsSchema = z
     {
       message: '예약 발행 시간을 선택해주세요',
       path: ['scheduledAt'],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.sendAlarm && !data.alarmBody) {
-        return false
-      }
-      return true
-    },
-    {
-      message: '알람 내용을 입력해주세요',
-      path: ['alarmBody'],
     }
   )
 

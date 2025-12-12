@@ -17,29 +17,17 @@ interface UsePublishOptionsStateOptions {
   initialState?: InitialPublishState
 }
 
-function parseScheduledAt(scheduledAt: string | null | undefined): {
-  year: string
-  month: string
-  day: string
-  hour: string
-  minute: string
-} {
+function parseScheduledAt(scheduledAt: string | null | undefined): Date | null {
   if (!scheduledAt) {
-    return { year: '', month: '', day: '', hour: '', minute: '' }
+    return null
   }
 
   const date = new Date(scheduledAt)
   if (isNaN(date.getTime())) {
-    return { year: '', month: '', day: '', hour: '', minute: '' }
+    return null
   }
 
-  return {
-    year: String(date.getFullYear()),
-    month: String(date.getMonth() + 1).padStart(2, '0'),
-    day: String(date.getDate()).padStart(2, '0'),
-    hour: String(date.getHours()).padStart(2, '0'),
-    minute: String(date.getMinutes()).padStart(2, '0'),
-  }
+  return date
 }
 
 function createInitialState(initialState?: InitialPublishState): PublishOptionsState {
@@ -48,18 +36,14 @@ function createInitialState(initialState?: InitialPublishState): PublishOptionsS
   }
 
   const visibility = initialState.visibility ?? 'public'
-  const scheduledParts = visibility === 'scheduled'
+  const scheduledDate = visibility === 'scheduled'
     ? parseScheduledAt(initialState.scheduledAt)
-    : { year: '', month: '', day: '', hour: '', minute: '' }
+    : null
 
   return {
     ...initialPublishOptionsState,
     visibility,
-    scheduledYear: scheduledParts.year,
-    scheduledMonth: scheduledParts.month,
-    scheduledDay: scheduledParts.day,
-    scheduledHour: scheduledParts.hour,
-    scheduledMinute: scheduledParts.minute,
+    scheduledDate,
   }
 }
 
@@ -85,42 +69,10 @@ export function usePublishOptionsState(options: UsePublishOptionsStateOptions = 
     }))
   }, [])
 
-  const setScheduledYear = useCallback((year: string) => {
+  const setScheduledDate = useCallback((date: Date | null) => {
     setState((prev) => ({
       ...prev,
-      scheduledYear: year,
-      errors: { ...prev.errors, scheduledAt: undefined },
-    }))
-  }, [])
-
-  const setScheduledMonth = useCallback((month: string) => {
-    setState((prev) => ({
-      ...prev,
-      scheduledMonth: month,
-      errors: { ...prev.errors, scheduledAt: undefined },
-    }))
-  }, [])
-
-  const setScheduledDay = useCallback((day: string) => {
-    setState((prev) => ({
-      ...prev,
-      scheduledDay: day,
-      errors: { ...prev.errors, scheduledAt: undefined },
-    }))
-  }, [])
-
-  const setScheduledHour = useCallback((hour: string) => {
-    setState((prev) => ({
-      ...prev,
-      scheduledHour: hour,
-      errors: { ...prev.errors, scheduledAt: undefined },
-    }))
-  }, [])
-
-  const setScheduledMinute = useCallback((minute: string) => {
-    setState((prev) => ({
-      ...prev,
-      scheduledMinute: minute,
+      scheduledDate: date,
       errors: { ...prev.errors, scheduledAt: undefined },
     }))
   }, [])
@@ -158,31 +110,13 @@ export function usePublishOptionsState(options: UsePublishOptionsStateOptions = 
     }))
   }, [])
 
-  const setAlarmBody = useCallback((body: string) => {
-    setState((prev) => ({
-      ...prev,
-      alarmBody: body,
-      errors: { ...prev.errors, alarmBody: undefined },
-    }))
-  }, [])
-
   const validate = useCallback((): boolean => {
     const errors: PublishOptionsState['errors'] = {}
 
     if (state.visibility === 'scheduled') {
-      if (
-        !state.scheduledYear ||
-        !state.scheduledMonth ||
-        !state.scheduledDay ||
-        !state.scheduledHour ||
-        !state.scheduledMinute
-      ) {
+      if (!state.scheduledDate) {
         errors.scheduledAt = '예약 발행 시간을 선택해주세요'
       }
-    }
-
-    if (state.sendAlarm && !state.alarmBody) {
-      errors.alarmBody = '알람 내용을 입력해주세요'
     }
 
     setState((prev) => ({ ...prev, errors }))
@@ -195,32 +129,11 @@ export function usePublishOptionsState(options: UsePublishOptionsStateOptions = 
   }, [initialState])
 
   const scheduledAt = useMemo(() => {
-    if (
-      !state.scheduledYear ||
-      !state.scheduledMonth ||
-      !state.scheduledDay ||
-      !state.scheduledHour ||
-      !state.scheduledMinute
-    ) {
+    if (!state.scheduledDate) {
       return null
     }
-
-    // 로컬 타임존 오프셋 계산 (예: +09:00)
-    const date = new Date(
-      Number(state.scheduledYear),
-      Number(state.scheduledMonth) - 1,
-      Number(state.scheduledDay),
-      Number(state.scheduledHour),
-      Number(state.scheduledMinute)
-    )
-    return date.toISOString()
-  }, [
-    state.scheduledYear,
-    state.scheduledMonth,
-    state.scheduledDay,
-    state.scheduledHour,
-    state.scheduledMinute,
-  ])
+    return state.scheduledDate.toISOString()
+  }, [state.scheduledDate])
 
   const showAlarmOptions = useMemo(() => {
     return state.visibility === 'public' || state.visibility === 'scheduled'
@@ -239,16 +152,11 @@ export function usePublishOptionsState(options: UsePublishOptionsStateOptions = 
     alarmTitle,
     actions: {
       setVisibility,
-      setScheduledYear,
-      setScheduledMonth,
-      setScheduledDay,
-      setScheduledHour,
-      setScheduledMinute,
+      setScheduledDate,
       setSendAlarm,
       setAlarmTarget,
       setAlarmTitleStrategy,
       setAlarmCustomTitle,
-      setAlarmBody,
       validate,
       reset,
     },

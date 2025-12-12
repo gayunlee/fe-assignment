@@ -10,14 +10,7 @@ import { Label } from '@/shared/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input'
-import { Textarea } from '@/shared/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select'
+import { DateTimePicker } from '@/shared/ui/date-time-picker'
 import { usePublishOptionsState, type InitialPublishState } from '../model/hooks'
 import type { Visibility, NotificationTarget } from '../model/types'
 
@@ -30,7 +23,6 @@ interface PublishModalProps {
     sendAlarm: boolean
     alarmTarget?: NotificationTarget
     alarmTitle?: string
-    alarmBody?: string
   }) => void
   contentTitle: string
   isLoading?: boolean
@@ -59,7 +51,6 @@ export function PublishModal({
       sendAlarm: state.sendAlarm,
       alarmTarget: state.sendAlarm ? state.alarmTarget : undefined,
       alarmTitle: state.sendAlarm ? alarmTitle : undefined,
-      alarmBody: state.sendAlarm ? state.alarmBody : undefined,
     })
   }
 
@@ -68,12 +59,9 @@ export function PublishModal({
     onClose()
   }
 
-  const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: 5 }, (_, i) => String(currentYear + i))
-  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
-  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'))
-  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
-  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
+  // 오늘 날짜 (과거 날짜 선택 방지)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -115,68 +103,12 @@ export function PublishModal({
           {state.visibility === 'scheduled' && (
             <div className="space-y-3">
               <Label className="text-sm font-medium">예약 시간</Label>
-              <div className="flex flex-wrap gap-2">
-                <Select value={state.scheduledYear} onValueChange={actions.setScheduledYear}>
-                  <SelectTrigger className="w-[90px]">
-                    <SelectValue placeholder="년" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}년
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={state.scheduledMonth} onValueChange={actions.setScheduledMonth}>
-                  <SelectTrigger className="w-[80px]">
-                    <SelectValue placeholder="월" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((month) => (
-                      <SelectItem key={month} value={month}>
-                        {month}월
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={state.scheduledDay} onValueChange={actions.setScheduledDay}>
-                  <SelectTrigger className="w-[80px]">
-                    <SelectValue placeholder="일" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {days.map((day) => (
-                      <SelectItem key={day} value={day}>
-                        {day}일
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={state.scheduledHour} onValueChange={actions.setScheduledHour}>
-                  <SelectTrigger className="w-[80px]">
-                    <SelectValue placeholder="시" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {hours.map((hour) => (
-                      <SelectItem key={hour} value={hour}>
-                        {hour}시
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={state.scheduledMinute} onValueChange={actions.setScheduledMinute}>
-                  <SelectTrigger className="w-[80px]">
-                    <SelectValue placeholder="분" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {minutes.map((minute) => (
-                      <SelectItem key={minute} value={minute}>
-                        {minute}분
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <DateTimePicker
+                value={state.scheduledDate ?? undefined}
+                onChange={(date) => actions.setScheduledDate(date ?? null)}
+                placeholder="예약 발행 시간을 선택하세요"
+                minDate={today}
+              />
               {state.errors.scheduledAt && (
                 <p className="text-sm text-red-500">{state.errors.scheduledAt}</p>
               )}
@@ -262,20 +194,6 @@ export function PublishModal({
                       onChange={(e) => actions.setAlarmCustomTitle(e.target.value)}
                       disabled={state.alarmTitleStrategy === 'content-title'}
                     />
-                  </div>
-
-                  {/* 알람 내용 */}
-                  <div className="space-y-2">
-                    <Label className="text-sm">알람 내용</Label>
-                    <Textarea
-                      placeholder="알람 내용을 입력해주세요"
-                      value={state.alarmBody}
-                      onChange={(e) => actions.setAlarmBody(e.target.value)}
-                      rows={3}
-                    />
-                    {state.errors.alarmBody && (
-                      <p className="text-sm text-red-500">{state.errors.alarmBody}</p>
-                    )}
                   </div>
                 </div>
               )}

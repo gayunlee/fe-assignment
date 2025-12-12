@@ -192,7 +192,6 @@ describe('useContentPublish', () => {
           sendAlarm: true,
           alarmTarget: 'all',
           alarmTitle: '알람 제목',
-          alarmBody: '알람 내용',
         }
 
         await result.current.execute(defaultContentData, options)
@@ -289,7 +288,6 @@ describe('useContentPublish', () => {
           sendAlarm: true,
           alarmTarget: 'follower',
           alarmTitle: '예약 알람',
-          alarmBody: '예약 알람 내용',
         }
 
         await result.current.execute(defaultContentData, options)

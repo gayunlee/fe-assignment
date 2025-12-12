@@ -35,33 +35,22 @@ export interface PublishContentResponse {
 
 export interface PublishOptionsState {
   visibility: Visibility
-  scheduledYear: string
-  scheduledMonth: string
-  scheduledDay: string
-  scheduledHour: string
-  scheduledMinute: string
+  scheduledDate: Date | null
   sendAlarm: boolean
   alarmTarget: NotificationTarget
   alarmTitleStrategy: TitleStrategy
   alarmCustomTitle: string
-  alarmBody: string
   errors: {
     scheduledAt?: string
-    alarmBody?: string
   }
 }
 
 export const initialPublishOptionsState: PublishOptionsState = {
   visibility: 'public',
-  scheduledYear: '',
-  scheduledMonth: '',
-  scheduledDay: '',
-  scheduledHour: '',
-  scheduledMinute: '',
+  scheduledDate: null,
   sendAlarm: false,
   alarmTarget: 'all',
   alarmTitleStrategy: 'content-title',
   alarmCustomTitle: '',
-  alarmBody: '',
   errors: {},
 }

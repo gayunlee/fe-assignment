@@ -29,7 +29,6 @@ export interface PublishOptionsInput {
   sendAlarm: boolean
   alarmTarget?: NotificationTarget
   alarmTitle?: string
-  alarmBody?: string
 }
 
 /**

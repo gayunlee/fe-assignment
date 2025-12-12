@@ -233,7 +233,6 @@ export function ContentFormPage() {
     sendAlarm: boolean
     alarmTarget?: NotificationTarget
     alarmTitle?: string
-    alarmBody?: string
   }) => {
     if (!isValid) return
 
