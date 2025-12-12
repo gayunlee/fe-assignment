@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { X } from 'lucide-react'
+import { toast } from 'sonner'
 import { Header } from '@/widgets/header'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
@@ -254,7 +255,8 @@ export function ContentFormPage() {
       setIsPublishModalOpen(false)
       navigate('/')
     } catch (error) {
-      console.error('발행 중 오류 발생:', error)
+      const message = error instanceof Error ? error.message : '발행 중 오류가 발생했습니다'
+      toast.error(message)
     }
   }
 
