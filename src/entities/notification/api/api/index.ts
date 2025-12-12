@@ -1,9 +1,12 @@
 import { apiClient } from '@/shared/api/client'
 import type {
   NotificationListResponse,
+  NotificationListApiResponse,
   NotificationResponse,
+  NotificationApiResponseWrapper,
   NotificationListParams,
 } from '../../model/types'
+import { mapNotificationFromApi } from '../../model/types'
 
 export async function getNotificationList(
   params: NotificationListParams = {}
@@ -18,9 +21,24 @@ export async function getNotificationList(
   const query = searchParams.toString()
   const url = query ? `api/v1/notifications?${query}` : 'api/v1/notifications'
 
-  return apiClient.get(url).json<NotificationListResponse>()
+  const response = await apiClient.get(url).json<NotificationListApiResponse>()
+
+  return {
+    success: response.success,
+    data: {
+      notifications: response.data.notifications.map(mapNotificationFromApi),
+      page: response.data.page,
+      limit: response.data.limit,
+      total: response.data.total,
+    },
+  }
 }
 
 export async function getNotification(id: number): Promise<NotificationResponse> {
-  return apiClient.get(`api/v1/notifications/${id}`).json<NotificationResponse>()
+  const response = await apiClient.get(`api/v1/notifications/${id}`).json<NotificationApiResponseWrapper>()
+
+  return {
+    success: response.success,
+    data: mapNotificationFromApi(response.data),
+  }
 }

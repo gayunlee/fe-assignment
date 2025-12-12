@@ -1,14 +1,15 @@
+import { useNavigate } from 'react-router-dom'
 import { useGetNotificationList, type Notification } from '@/entities/notification'
 import { AlarmListItem } from './AlarmListItem'
 import type { AlarmListProps } from '../model/types'
 import { cn } from '@/shared/lib/utils'
 
 export function AlarmList({ className }: AlarmListProps) {
+  const navigate = useNavigate()
   const { data, isLoading, isError, error } = useGetNotificationList({})
 
   const handleNotificationClick = (id: number) => {
-    console.log('Notification clicked:', id)
-    // TODO: Navigate to notification detail or edit page
+    navigate(`/alarm/${id}/edit`)
   }
 
   if (isLoading) {

@@ -1,31 +1,25 @@
 import { useState, useCallback, useMemo } from 'react'
+import type { NotificationTarget } from '@/entities/notification'
 import type { NotificationFormState } from '../types'
 import { initialNotificationFormState } from '../types'
 
-export function useNotificationFormState() {
-  const [state, setState] = useState<NotificationFormState>(initialNotificationFormState)
+export interface NotificationFormInitialValues {
+  title?: string
+  scheduledDate?: Date
+  targetType?: NotificationTarget
+}
+
+export function useNotificationFormState(initialValues?: NotificationFormInitialValues) {
+  const [state, setState] = useState<NotificationFormState>(() => ({
+    ...initialNotificationFormState,
+    ...initialValues,
+  }))
 
   const setTitle = useCallback((title: string) => {
     setState((prev) => ({
       ...prev,
       title,
       errors: { ...prev.errors, title: undefined },
-    }))
-  }, [])
-
-  const setLinkUrl = useCallback((linkUrl: string) => {
-    setState((prev) => ({
-      ...prev,
-      linkUrl,
-      errors: { ...prev.errors, linkUrl: undefined },
-    }))
-  }, [])
-
-  const clearLinkUrl = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      linkUrl: '',
-      errors: { ...prev.errors, linkUrl: undefined },
     }))
   }, [])
 
@@ -37,21 +31,18 @@ export function useNotificationFormState() {
     }))
   }, [])
 
+  const setTargetType = useCallback((targetType: NotificationTarget) => {
+    setState((prev) => ({
+      ...prev,
+      targetType,
+    }))
+  }, [])
+
   const validate = useCallback((): boolean => {
     const errors: NotificationFormState['errors'] = {}
 
     if (!state.title) {
       errors.title = '제목을 입력해주세요'
-    }
-
-    if (!state.linkUrl) {
-      errors.linkUrl = '링크를 입력해주세요'
-    } else {
-      try {
-        new URL(state.linkUrl)
-      } catch {
-        errors.linkUrl = '올바른 URL 형식이 아닙니다'
-      }
     }
 
     if (!state.scheduledDate) {
@@ -75,13 +66,7 @@ export function useNotificationFormState() {
   }, [state.scheduledDate])
 
   const isValid = useMemo(() => {
-    if (!state.title || !state.linkUrl) {
-      return false
-    }
-
-    try {
-      new URL(state.linkUrl)
-    } catch {
+    if (!state.title) {
       return false
     }
 
@@ -90,11 +75,16 @@ export function useNotificationFormState() {
     }
 
     return true
-  }, [state.title, state.linkUrl, state.scheduledDate])
+  }, [state.title, state.scheduledDate])
 
   const hasChanges = useMemo(() => {
-    return state.title !== '' || state.linkUrl !== '' || state.scheduledDate !== undefined
-  }, [state])
+    const initial = initialValues ?? initialNotificationFormState
+    return (
+      state.title !== (initial.title ?? '') ||
+      state.scheduledDate !== initial.scheduledDate ||
+      state.targetType !== (initial.targetType ?? 'all')
+    )
+  }, [state, initialValues])
 
   return {
     state,
@@ -103,9 +93,8 @@ export function useNotificationFormState() {
     hasChanges,
     actions: {
       setTitle,
-      setLinkUrl,
-      clearLinkUrl,
       setScheduledDate,
+      setTargetType,
       validate,
       reset,
     },

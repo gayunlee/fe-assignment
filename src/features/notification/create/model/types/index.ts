@@ -47,18 +47,17 @@ export interface DeleteNotificationResponse {
 
 export interface NotificationFormState {
   title: string
-  linkUrl: string
   scheduledDate: Date | undefined
+  targetType: NotificationTarget
   errors: {
     title?: string
-    linkUrl?: string
     scheduledAt?: string
   }
 }
 
 export const initialNotificationFormState: NotificationFormState = {
   title: '',
-  linkUrl: '',
   scheduledDate: undefined,
+  targetType: 'all',
   errors: {},
 }

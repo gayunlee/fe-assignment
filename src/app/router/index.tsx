@@ -47,4 +47,12 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+  {
+    path: '/alarm/:id/edit',
+    element: (
+      <ProtectedRoute>
+        <AlarmFormPage />
+      </ProtectedRoute>
+    ),
+  },
 ])

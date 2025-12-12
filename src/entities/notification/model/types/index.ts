@@ -26,6 +26,62 @@ export interface Notification {
   updatedAt: string
 }
 
+// API 응답 타입 (snake_case)
+export interface NotificationApiResponse {
+  id: number
+  title: string
+  content_id: number
+  content: Content
+  target_type: NotificationTarget
+  status: NotificationStatus
+  scheduled_at: string | null
+  sent_at: string | null
+  creator_id: number
+  creator: UserSummary
+  stats: {
+    success_count: number
+    failure_count: number
+  }
+  created_at: string
+  updated_at: string
+}
+
+export function mapNotificationFromApi(api: NotificationApiResponse): Notification {
+  return {
+    id: api.id,
+    title: api.title,
+    contentId: api.content_id,
+    content: api.content,
+    targetType: api.target_type,
+    status: api.status,
+    scheduledAt: api.scheduled_at,
+    sentAt: api.sent_at,
+    creatorId: api.creator_id,
+    creator: api.creator,
+    stats: {
+      successCount: api.stats.success_count,
+      failureCount: api.stats.failure_count,
+    },
+    createdAt: api.created_at,
+    updatedAt: api.updated_at,
+  }
+}
+
+export interface NotificationListApiResponse {
+  success: boolean
+  data: {
+    notifications: NotificationApiResponse[]
+    page: number
+    limit: number
+    total: number
+  }
+}
+
+export interface NotificationApiResponseWrapper {
+  success: boolean
+  data: NotificationApiResponse
+}
+
 export interface NotificationListResponse {
   success: boolean
   data: {
