@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select'
-import { usePublishOptionsState } from '../model/hooks'
+import { usePublishOptionsState, type InitialPublishState } from '../model/hooks'
 import type { Visibility, NotificationTarget } from '../model/types'
 
 interface PublishModalProps {
@@ -34,6 +34,7 @@ interface PublishModalProps {
   }) => void
   contentTitle: string
   isLoading?: boolean
+  initialState?: InitialPublishState
 }
 
 export function PublishModal({
@@ -42,9 +43,10 @@ export function PublishModal({
   onPublish,
   contentTitle,
   isLoading = false,
+  initialState,
 }: PublishModalProps) {
   const { state, scheduledAt, showAlarmOptions, alarmTitle, actions } =
-    usePublishOptionsState({ contentTitle })
+    usePublishOptionsState({ contentTitle, initialState })
 
   const handleSubmit = () => {
     if (!actions.validate()) {

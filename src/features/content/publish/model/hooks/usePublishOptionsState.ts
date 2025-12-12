@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import type {
   PublishOptionsState,
   Visibility,
@@ -7,13 +7,75 @@ import type {
 } from '../types'
 import { initialPublishOptionsState } from '../types'
 
+export interface InitialPublishState {
+  visibility?: Visibility
+  scheduledAt?: string | null // ISO string
+}
+
 interface UsePublishOptionsStateOptions {
   contentTitle?: string
+  initialState?: InitialPublishState
+}
+
+function parseScheduledAt(scheduledAt: string | null | undefined): {
+  year: string
+  month: string
+  day: string
+  hour: string
+  minute: string
+} {
+  if (!scheduledAt) {
+    return { year: '', month: '', day: '', hour: '', minute: '' }
+  }
+
+  const date = new Date(scheduledAt)
+  if (isNaN(date.getTime())) {
+    return { year: '', month: '', day: '', hour: '', minute: '' }
+  }
+
+  return {
+    year: String(date.getFullYear()),
+    month: String(date.getMonth() + 1).padStart(2, '0'),
+    day: String(date.getDate()).padStart(2, '0'),
+    hour: String(date.getHours()).padStart(2, '0'),
+    minute: String(date.getMinutes()).padStart(2, '0'),
+  }
+}
+
+function createInitialState(initialState?: InitialPublishState): PublishOptionsState {
+  if (!initialState) {
+    return initialPublishOptionsState
+  }
+
+  const visibility = initialState.visibility ?? 'public'
+  const scheduledParts = visibility === 'scheduled'
+    ? parseScheduledAt(initialState.scheduledAt)
+    : { year: '', month: '', day: '', hour: '', minute: '' }
+
+  return {
+    ...initialPublishOptionsState,
+    visibility,
+    scheduledYear: scheduledParts.year,
+    scheduledMonth: scheduledParts.month,
+    scheduledDay: scheduledParts.day,
+    scheduledHour: scheduledParts.hour,
+    scheduledMinute: scheduledParts.minute,
+  }
 }
 
 export function usePublishOptionsState(options: UsePublishOptionsStateOptions = {}) {
-  const { contentTitle = '' } = options
-  const [state, setState] = useState<PublishOptionsState>(initialPublishOptionsState)
+  const { contentTitle = '', initialState } = options
+  const [state, setState] = useState<PublishOptionsState>(() => createInitialState(initialState))
+
+  // initialState가 변경되면 (비동기 로드 후) 상태 동기화
+  const prevInitialStateRef = useRef(initialState)
+  useEffect(() => {
+    // initialState가 undefined에서 값으로 변경된 경우에만 동기화
+    if (initialState && !prevInitialStateRef.current) {
+      setState(createInitialState(initialState))
+    }
+    prevInitialStateRef.current = initialState
+  }, [initialState])
 
   const setVisibility = useCallback((visibility: Visibility) => {
     setState((prev) => ({
@@ -129,8 +191,8 @@ export function usePublishOptionsState(options: UsePublishOptionsStateOptions = 
   }, [state])
 
   const reset = useCallback(() => {
-    setState(initialPublishOptionsState)
-  }, [])
+    setState(createInitialState(initialState))
+  }, [initialState])
 
   const scheduledAt = useMemo(() => {
     if (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -31,6 +31,8 @@ import {
   useContentPublish,
   type Visibility,
   type NotificationTarget,
+  type InitialPublishState,
+  type ExistingContentState,
 } from '@/features/content/publish'
 import { VALIDATION } from '@/shared/config/constants'
 
@@ -122,10 +124,70 @@ export function ContentFormPage() {
     enabled: hasUnsavedChanges,
   })
 
+  // 수정 모드: Content status를 ExistingContentState로 변환
+  const previousState = useMemo((): ExistingContentState | undefined => {
+    if (!isEditMode || !existingContent) {
+      return undefined
+    }
+
+    const { status, publishedAt } = existingContent
+
+    // private 상태이고 publishedAt이 미래인 경우 → scheduled (예약발행)
+    if (status === 'private' && publishedAt) {
+      const publishDate = new Date(publishedAt)
+      if (publishDate > new Date()) {
+        return 'scheduled'
+      }
+    }
+
+    // public, private, draft 상태
+    return status
+  }, [isEditMode, existingContent])
+
   const { execute: publishContentFlow, isPending: isPublishingFlow } = useContentPublish({
     isEditMode,
     contentId,
+    previousState,
+    // TODO: existingNotification 추가 필요
   })
+
+  // 수정 모드: 기존 콘텐츠의 발행 상태를 PublishModal 초기값으로 변환
+  const initialPublishState = useMemo((): InitialPublishState | undefined => {
+    if (!isEditMode || !existingContent) {
+      return undefined
+    }
+
+    const { status, publishedAt } = existingContent
+
+    // private 상태이고 publishedAt이 미래인 경우 → 예약 발행
+    if (status === 'private' && publishedAt) {
+      const publishDate = new Date(publishedAt)
+      if (publishDate > new Date()) {
+        return {
+          visibility: 'scheduled',
+          scheduledAt: publishedAt,
+        }
+      }
+    }
+
+    // public → 공개, private (스케줄 없음) → 비공개
+    if (status === 'public') {
+      return {
+        visibility: 'public',
+        scheduledAt: null,
+      }
+    }
+
+    if (status === 'private') {
+      return {
+        visibility: 'private',
+        scheduledAt: null,
+      }
+    }
+
+    // 기본값 (draft 상태)
+    return undefined
+  }, [isEditMode, existingContent])
 
   const handleCategoryToggle = (category: string) => {
     const current = categories
@@ -353,6 +415,7 @@ export function ContentFormPage() {
         onPublish={handlePublish}
         contentTitle={title}
         isLoading={isPublishingFlow}
+        initialState={initialPublishState}
       />
 
       {/* 뒤로가기 확인 모달 */}

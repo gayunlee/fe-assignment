@@ -35,7 +35,7 @@ export interface PublishOptionsInput {
 /**
  * 콘텐츠의 기존 상태
  */
-export type ExistingContentState = 'draft' | 'scheduled' | 'public'
+export type ExistingContentState = 'draft' | 'scheduled' | 'public' | 'private'
 
 /**
  * 기존 알람 정보
@@ -215,6 +215,17 @@ export function useContentPublish({
         await publishContent({ id: targetContentId, status: 'private' })
       }
       // public 상태 유지인 경우 상태 변경 API 호출하지 않음
+      return
+    }
+
+    // private 상태에서의 변경
+    if (prevState === 'private') {
+      if (visibility === 'public') {
+        await publishContent({ id: targetContentId, status: 'public' })
+      } else if (visibility === 'scheduled' && scheduledAt) {
+        await scheduleContent({ id: targetContentId, publishedAt: scheduledAt })
+      }
+      // private 상태 유지인 경우 상태 변경 API 호출하지 않음
     }
   }
 
