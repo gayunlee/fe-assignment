@@ -12,7 +12,7 @@ export interface Content {
   body: string
   category: string
   linkUrl: string | null
-  status: 'public' | 'private' | 'draft'
+  status: 'public' | 'private'
   userId: number
   user: UserSummary
   stats: ContentStats
@@ -41,4 +41,14 @@ export interface ContentListParams {
   limit?: number
   status?: 'public' | 'private'
   category?: string
+}
+
+export interface ContentSchedule {
+  isScheduled: boolean
+  publishedAt: string | null
+}
+
+export interface ContentScheduleResponse {
+  success: boolean
+  data: ContentSchedule
 }

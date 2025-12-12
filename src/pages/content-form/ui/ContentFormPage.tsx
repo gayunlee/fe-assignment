@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/shared/ui/dialog'
-import { useGetContent } from '@/entities/content'
+import { useGetContent, useGetContentSchedule } from '@/entities/content'
 import {
   contentFormSchema,
   type ContentFormValues,
@@ -55,6 +55,9 @@ export function ContentFormPage() {
 
   // 수정 모드: 기존 콘텐츠 조회
   const { data: existingContent, isLoading: isLoadingContent } = useGetContent(contentId ?? 0)
+
+  // 수정 모드: 예약 발행 상태 조회
+  const { data: contentSchedule, isLoading: isLoadingSchedule } = useGetContentSchedule(contentId ?? 0)
 
   const { draft, save: saveDraft, clear: clearDraft } = useDraftState({
     authorId: 1, // TODO: Get from auth context
@@ -127,23 +130,21 @@ export function ContentFormPage() {
 
   // 수정 모드: Content status를 ExistingContentState로 변환
   const previousState = useMemo((): ExistingContentState | undefined => {
-    if (!isEditMode || !existingContent) {
+    if (!isEditMode || !existingContent || !contentSchedule) {
       return undefined
     }
 
-    const { status, publishedAt } = existingContent
+    const { status } = existingContent
+    const { isScheduled } = contentSchedule
 
-    // private 상태이고 publishedAt이 미래인 경우 → scheduled (예약발행)
-    if (status === 'private' && publishedAt) {
-      const publishDate = new Date(publishedAt)
-      if (publishDate > new Date()) {
-        return 'scheduled'
-      }
+    // private 상태이고 예약 발행이 설정된 경우 → scheduled
+    if (status === 'private' && isScheduled) {
+      return 'scheduled'
     }
 
-    // public, private, draft 상태
+    // public 또는 private (예약 없음)
     return status
-  }, [isEditMode, existingContent])
+  }, [isEditMode, existingContent, contentSchedule])
 
   const { execute: publishContentFlow, isPending: isPublishingFlow } = useContentPublish({
     isEditMode,
@@ -154,24 +155,22 @@ export function ContentFormPage() {
 
   // 수정 모드: 기존 콘텐츠의 발행 상태를 PublishModal 초기값으로 변환
   const initialPublishState = useMemo((): InitialPublishState | undefined => {
-    if (!isEditMode || !existingContent) {
+    if (!isEditMode || !existingContent || !contentSchedule) {
       return undefined
     }
 
-    const { status, publishedAt } = existingContent
+    const { status } = existingContent
+    const { isScheduled, publishedAt } = contentSchedule
 
-    // private 상태이고 publishedAt이 미래인 경우 → 예약 발행
-    if (status === 'private' && publishedAt) {
-      const publishDate = new Date(publishedAt)
-      if (publishDate > new Date()) {
-        return {
-          visibility: 'scheduled',
-          scheduledAt: publishedAt,
-        }
+    // private 상태이고 예약 발행이 설정된 경우 → 예약 발행
+    if (status === 'private' && isScheduled && publishedAt) {
+      return {
+        visibility: 'scheduled',
+        scheduledAt: publishedAt,
       }
     }
 
-    // public → 공개, private (스케줄 없음) → 비공개
+    // public → 공개, private (예약 없음) → 비공개
     if (status === 'public') {
       return {
         visibility: 'public',
@@ -186,9 +185,8 @@ export function ContentFormPage() {
       }
     }
 
-    // 기본값 (draft 상태)
     return undefined
-  }, [isEditMode, existingContent])
+  }, [isEditMode, existingContent, contentSchedule])
 
   const handleCategoryToggle = (category: string) => {
     const current = categories
@@ -271,7 +269,7 @@ export function ContentFormPage() {
   }
 
   // 수정 모드에서 콘텐츠 로딩 중
-  if (isEditMode && isLoadingContent) {
+  if (isEditMode && (isLoadingContent || isLoadingSchedule)) {
     return (
       <div className="min-h-screen bg-background">
         <Header variant="content-form" onBack={() => navigate('/')} />

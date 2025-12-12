@@ -1,5 +1,5 @@
 import { apiClient } from '@/shared/api/client'
-import type { ContentListResponse, ContentResponse, ContentListParams } from '../../model/types'
+import type { ContentListResponse, ContentResponse, ContentListParams, ContentScheduleResponse } from '../../model/types'
 
 export async function getContentList(params: ContentListParams = {}): Promise<ContentListResponse> {
   const searchParams = new URLSearchParams()
@@ -17,4 +17,8 @@ export async function getContentList(params: ContentListParams = {}): Promise<Co
 
 export async function getContent(id: number): Promise<ContentResponse> {
   return apiClient.get(`api/v1/contents/${id}`).json<ContentResponse>()
+}
+
+export async function getContentSchedule(id: number): Promise<ContentScheduleResponse> {
+  return apiClient.get(`api/v1/contents/${id}/schedule`).json<ContentScheduleResponse>()
 }
