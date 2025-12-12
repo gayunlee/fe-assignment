@@ -10,6 +10,7 @@ interface UseInitialPublishStateOptions {
 }
 
 interface UseInitialPublishStateResult {
+  content: Content | undefined
   initialPublishState: InitialPublishState | undefined
   previousState: ExistingContentState | undefined
   isLoading: boolean
@@ -116,6 +117,7 @@ export function useInitialPublishState({
   const isLoading = isEditMode && (isLoadingContent || isLoadingSchedule)
 
   return {
+    content,
     initialPublishState,
     previousState,
     isLoading,

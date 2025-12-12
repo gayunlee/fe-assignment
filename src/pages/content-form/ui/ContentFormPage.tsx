@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,7 +17,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/shared/ui/dialog'
-import { useGetContent, useGetContentSchedule } from '@/entities/content'
 import {
   contentFormSchema,
   type ContentFormValues,
@@ -30,8 +29,7 @@ import {
 import {
   PublishModal,
   useContentPublish,
-  calculateInitialPublishState,
-  calculatePreviousState,
+  useInitialPublishState,
   type Visibility,
   type NotificationTarget,
 } from '@/features/content/publish'
@@ -53,11 +51,13 @@ export function ContentFormPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // 수정 모드: 기존 콘텐츠 조회
-  const { data: existingContent, isLoading: isLoadingContent } = useGetContent(contentId ?? 0)
-
-  // 수정 모드: 예약 발행 상태 조회
-  const { data: contentSchedule, isLoading: isLoadingSchedule } = useGetContentSchedule(contentId ?? 0)
+  // 수정 모드: 콘텐츠 및 발행 상태 조회
+  const {
+    content: existingContent,
+    initialPublishState,
+    previousState,
+    isLoading: isLoadingContent,
+  } = useInitialPublishState({ contentId, isEditMode })
 
   const { draft, save: saveDraft, clear: clearDraft } = useDraftState({
     authorId: 1, // TODO: Get from auth context
@@ -128,24 +128,12 @@ export function ContentFormPage() {
     enabled: hasUnsavedChanges,
   })
 
-  // 수정 모드: Content status를 ExistingContentState로 변환
-  const previousState = useMemo(() => {
-    if (!isEditMode) return undefined
-    return calculatePreviousState(existingContent, contentSchedule)
-  }, [isEditMode, existingContent, contentSchedule])
-
   const { execute: publishContentFlow, isPending: isPublishingFlow } = useContentPublish({
     isEditMode,
     contentId,
     previousState,
     // TODO: existingNotification 추가 필요
   })
-
-  // 수정 모드: 기존 콘텐츠의 발행 상태를 PublishModal 초기값으로 변환
-  const initialPublishState = useMemo(() => {
-    if (!isEditMode) return undefined
-    return calculateInitialPublishState(existingContent, contentSchedule)
-  }, [isEditMode, existingContent, contentSchedule])
 
   const handleCategoryToggle = (category: string) => {
     const current = categories
@@ -228,7 +216,7 @@ export function ContentFormPage() {
   }
 
   // 수정 모드에서 콘텐츠 로딩 중
-  if (isEditMode && (isLoadingContent || isLoadingSchedule)) {
+  if (isLoadingContent) {
     return (
       <div className="min-h-screen bg-background">
         <Header variant="content-form" onBack={() => navigate('/')} />
