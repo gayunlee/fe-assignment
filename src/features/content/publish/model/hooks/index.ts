@@ -9,3 +9,8 @@ export type {
   ExistingContentState,
   ExistingNotification,
 } from './useContentPublish'
+export {
+  useInitialPublishState,
+  calculateInitialPublishState,
+  calculatePreviousState,
+} from './useInitialPublishState'

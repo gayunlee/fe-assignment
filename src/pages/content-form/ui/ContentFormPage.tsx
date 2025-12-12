@@ -30,10 +30,10 @@ import {
 import {
   PublishModal,
   useContentPublish,
+  calculateInitialPublishState,
+  calculatePreviousState,
   type Visibility,
   type NotificationTarget,
-  type InitialPublishState,
-  type ExistingContentState,
 } from '@/features/content/publish'
 import { VALIDATION } from '@/shared/config/constants'
 
@@ -129,21 +129,9 @@ export function ContentFormPage() {
   })
 
   // 수정 모드: Content status를 ExistingContentState로 변환
-  const previousState = useMemo((): ExistingContentState | undefined => {
-    if (!isEditMode || !existingContent || !contentSchedule) {
-      return undefined
-    }
-
-    const { status } = existingContent
-    const { isScheduled } = contentSchedule
-
-    // private 상태이고 예약 발행이 설정된 경우 → scheduled
-    if (status === 'private' && isScheduled) {
-      return 'scheduled'
-    }
-
-    // public 또는 private (예약 없음)
-    return status
+  const previousState = useMemo(() => {
+    if (!isEditMode) return undefined
+    return calculatePreviousState(existingContent, contentSchedule)
   }, [isEditMode, existingContent, contentSchedule])
 
   const { execute: publishContentFlow, isPending: isPublishingFlow } = useContentPublish({
@@ -154,38 +142,9 @@ export function ContentFormPage() {
   })
 
   // 수정 모드: 기존 콘텐츠의 발행 상태를 PublishModal 초기값으로 변환
-  const initialPublishState = useMemo((): InitialPublishState | undefined => {
-    if (!isEditMode || !existingContent || !contentSchedule) {
-      return undefined
-    }
-
-    const { status } = existingContent
-    const { isScheduled, publishedAt } = contentSchedule
-
-    // private 상태이고 예약 발행이 설정된 경우 → 예약 발행
-    if (status === 'private' && isScheduled && publishedAt) {
-      return {
-        visibility: 'scheduled',
-        scheduledAt: publishedAt,
-      }
-    }
-
-    // public → 공개, private (예약 없음) → 비공개
-    if (status === 'public') {
-      return {
-        visibility: 'public',
-        scheduledAt: null,
-      }
-    }
-
-    if (status === 'private') {
-      return {
-        visibility: 'private',
-        scheduledAt: null,
-      }
-    }
-
-    return undefined
+  const initialPublishState = useMemo(() => {
+    if (!isEditMode) return undefined
+    return calculateInitialPublishState(existingContent, contentSchedule)
   }, [isEditMode, existingContent, contentSchedule])
 
   const handleCategoryToggle = (category: string) => {
