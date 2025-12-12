@@ -20,9 +20,7 @@ import { useGetContent } from '@/entities/content'
 import {
   contentFormSchema,
   type ContentFormValues,
-  useCreateContent,
 } from '@/features/content/create'
-import { useUpdateContent } from '@/features/content/edit'
 import {
   useDraftState,
   useAutoSave,
@@ -30,12 +28,10 @@ import {
 } from '@/features/content/draft'
 import {
   PublishModal,
-  usePublishContent,
-  useScheduleContent,
+  useContentPublish,
   type Visibility,
   type NotificationTarget,
 } from '@/features/content/publish'
-import { useCreateNotification } from '@/features/notification/create'
 import { VALIDATION } from '@/shared/config/constants'
 
 const CATEGORIES = ['일반', '공지', '이벤트', '프로모션']
@@ -126,11 +122,10 @@ export function ContentFormPage() {
     enabled: hasUnsavedChanges,
   })
 
-  const { mutateAsync: createContent, isPending: isCreating } = useCreateContent()
-  const { mutateAsync: updateContent, isPending: isUpdating } = useUpdateContent()
-  const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContent()
-  const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContent()
-  const { mutateAsync: createNotification, isPending: isCreatingNotification } = useCreateNotification()
+  const { execute: publishContentFlow, isPending: isPublishingFlow } = useContentPublish({
+    isEditMode,
+    contentId,
+  })
 
   const handleCategoryToggle = (category: string) => {
     const current = categories
@@ -181,48 +176,15 @@ export function ContentFormPage() {
     if (!isValid) return
 
     try {
-      let targetContentId: number
-
-      if (isEditMode && contentId) {
-        // 수정 모드: 콘텐츠 업데이트
-        await updateContent({
-          id: contentId,
+      await publishContentFlow(
+        {
           title,
           body,
           category: categories.join(','),
           linkUrl: linkUrl || undefined,
-        })
-        targetContentId = contentId
-      } else {
-        // 생성 모드: 콘텐츠 생성
-        const response = await createContent({
-          title,
-          body,
-          category: categories.join(','),
-          linkUrl: linkUrl || undefined,
-        })
-        targetContentId = response.data.id
-      }
-
-      // 2. 공개 상태에 따른 처리
-      if (options.visibility === 'public') {
-        // 즉시 공개
-        await publishContent({ id: targetContentId, status: 'public' })
-      } else if (options.visibility === 'scheduled' && options.scheduledAt) {
-        // 예약 발행
-        await scheduleContent({ id: targetContentId, publishedAt: options.scheduledAt })
-      }
-      // visibility === 'private'인 경우 상태 변경 없음 (기본 draft)
-
-      // 3. 알람 발송 설정
-      if (options.sendAlarm && options.alarmTarget && options.alarmTitle) {
-        await createNotification({
-          title: options.alarmTitle,
-          contentId: targetContentId,
-          targetType: options.alarmTarget,
-          scheduledAt: options.scheduledAt, // 예약 발행 시간과 동일
-        })
-      }
+        },
+        options
+      )
 
       // 완료 처리
       if (!isEditMode) {
@@ -265,7 +227,7 @@ export function ContentFormPage() {
         onSaveDraft={isEditMode ? undefined : handleSaveDraft}
         onPublish={handlePublishClick}
         isPublishDisabled={!isValid}
-        isPublishing={isCreating || isUpdating || isPublishing || isScheduling || isCreatingNotification}
+        isPublishing={isPublishingFlow}
       />
 
       <main className="container max-w-2xl px-4 py-6">
@@ -390,7 +352,7 @@ export function ContentFormPage() {
         onClose={() => setIsPublishModalOpen(false)}
         onPublish={handlePublish}
         contentTitle={title}
-        isLoading={isCreating || isUpdating || isPublishing || isScheduling || isCreatingNotification}
+        isLoading={isPublishingFlow}
       />
 
       {/* 뒤로가기 확인 모달 */}

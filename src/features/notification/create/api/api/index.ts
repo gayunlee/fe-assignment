@@ -41,3 +41,22 @@ export async function deleteNotification(
 ): Promise<DeleteNotificationResponse> {
   return apiClient.delete(`api/v1/notifications/${request.id}`).json()
 }
+
+export interface ScheduleNotificationRequest {
+  id: number
+  scheduledAt: string
+}
+
+export interface ScheduleNotificationResponse {
+  success: boolean
+}
+
+export async function scheduleNotification(
+  request: ScheduleNotificationRequest
+): Promise<ScheduleNotificationResponse> {
+  return apiClient
+    .post(`api/v1/notifications/${request.id}/schedule`, {
+      json: { scheduled_at: request.scheduledAt },
+    })
+    .json()
+}

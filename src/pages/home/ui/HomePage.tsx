@@ -18,13 +18,18 @@ export function HomePage() {
     setIsNewPostModalOpen(true)
   }
 
-  const handleNewPostSelect = (useDraft: boolean) => {
+  const handleNewPostSelectContent = (useDraft: boolean) => {
     setIsNewPostModalOpen(false)
     if (useDraft) {
       navigate('/content/new?draft=true')
     } else {
       navigate('/content/new')
     }
+  }
+
+  const handleNewPostSelectAlarm = () => {
+    setIsNewPostModalOpen(false)
+    navigate('/alarm/new')
   }
 
   return (
@@ -55,7 +60,8 @@ export function HomePage() {
       <NewPostModal
         isOpen={isNewPostModalOpen}
         onClose={() => setIsNewPostModalOpen(false)}
-        onSelect={handleNewPostSelect}
+        onSelectContent={handleNewPostSelectContent}
+        onSelectAlarm={handleNewPostSelectAlarm}
       />
     </div>
   )

@@ -1,2 +1,6 @@
-export { createNotification } from './api'
+export { createNotification, updateNotification, deleteNotification, scheduleNotification } from './api'
+export type { ScheduleNotificationRequest, ScheduleNotificationResponse } from './api'
 export { useCreateNotification } from './queries/useCreateNotification'
+export { useUpdateNotification } from './queries/useUpdateNotification'
+export { useDeleteNotification } from './queries/useDeleteNotification'
+export { useScheduleNotification } from './queries/useScheduleNotification'
