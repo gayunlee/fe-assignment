@@ -29,42 +29,10 @@ export function useNotificationFormState() {
     }))
   }, [])
 
-  const setScheduledYear = useCallback((year: string) => {
+  const setScheduledDate = useCallback((date: Date | undefined) => {
     setState((prev) => ({
       ...prev,
-      scheduledYear: year,
-      errors: { ...prev.errors, scheduledAt: undefined },
-    }))
-  }, [])
-
-  const setScheduledMonth = useCallback((month: string) => {
-    setState((prev) => ({
-      ...prev,
-      scheduledMonth: month,
-      errors: { ...prev.errors, scheduledAt: undefined },
-    }))
-  }, [])
-
-  const setScheduledDay = useCallback((day: string) => {
-    setState((prev) => ({
-      ...prev,
-      scheduledDay: day,
-      errors: { ...prev.errors, scheduledAt: undefined },
-    }))
-  }, [])
-
-  const setScheduledHour = useCallback((hour: string) => {
-    setState((prev) => ({
-      ...prev,
-      scheduledHour: hour,
-      errors: { ...prev.errors, scheduledAt: undefined },
-    }))
-  }, [])
-
-  const setScheduledMinute = useCallback((minute: string) => {
-    setState((prev) => ({
-      ...prev,
-      scheduledMinute: minute,
+      scheduledDate: date,
       errors: { ...prev.errors, scheduledAt: undefined },
     }))
   }, [])
@@ -86,13 +54,7 @@ export function useNotificationFormState() {
       }
     }
 
-    if (
-      !state.scheduledYear ||
-      !state.scheduledMonth ||
-      !state.scheduledDay ||
-      !state.scheduledHour ||
-      !state.scheduledMinute
-    ) {
+    if (!state.scheduledDate) {
       errors.scheduledAt = '발송 시간을 선택해주세요'
     }
 
@@ -106,32 +68,11 @@ export function useNotificationFormState() {
   }, [])
 
   const scheduledAt = useMemo(() => {
-    if (
-      !state.scheduledYear ||
-      !state.scheduledMonth ||
-      !state.scheduledDay ||
-      !state.scheduledHour ||
-      !state.scheduledMinute
-    ) {
+    if (!state.scheduledDate) {
       return null
     }
-
-    // ISO 8601 with timezone (UTC)
-    const date = new Date(
-      Number(state.scheduledYear),
-      Number(state.scheduledMonth) - 1,
-      Number(state.scheduledDay),
-      Number(state.scheduledHour),
-      Number(state.scheduledMinute)
-    )
-    return date.toISOString()
-  }, [
-    state.scheduledYear,
-    state.scheduledMonth,
-    state.scheduledDay,
-    state.scheduledHour,
-    state.scheduledMinute,
-  ])
+    return state.scheduledDate.toISOString()
+  }, [state.scheduledDate])
 
   const isValid = useMemo(() => {
     if (!state.title || !state.linkUrl) {
@@ -144,23 +85,15 @@ export function useNotificationFormState() {
       return false
     }
 
-    if (!scheduledAt) {
+    if (!state.scheduledDate) {
       return false
     }
 
     return true
-  }, [state.title, state.linkUrl, scheduledAt])
+  }, [state.title, state.linkUrl, state.scheduledDate])
 
   const hasChanges = useMemo(() => {
-    return (
-      state.title !== '' ||
-      state.linkUrl !== '' ||
-      state.scheduledYear !== '' ||
-      state.scheduledMonth !== '' ||
-      state.scheduledDay !== '' ||
-      state.scheduledHour !== '' ||
-      state.scheduledMinute !== ''
-    )
+    return state.title !== '' || state.linkUrl !== '' || state.scheduledDate !== undefined
   }, [state])
 
   return {
@@ -172,11 +105,7 @@ export function useNotificationFormState() {
       setTitle,
       setLinkUrl,
       clearLinkUrl,
-      setScheduledYear,
-      setScheduledMonth,
-      setScheduledDay,
-      setScheduledHour,
-      setScheduledMinute,
+      setScheduledDate,
       validate,
       reset,
     },

@@ -5,13 +5,7 @@ import { Header } from '@/widgets/header'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select'
+import { DateTimePicker } from '@/shared/ui/date-time-picker'
 import {
   Dialog,
   DialogContent,
@@ -29,13 +23,6 @@ export function AlarmFormPage() {
 
   const { state, scheduledAt, isValid, hasChanges, actions } = useNotificationFormState()
   const { mutate: createNotification, isPending } = useCreateNotification()
-
-  const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: 5 }, (_, i) => String(currentYear + i))
-  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
-  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'))
-  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
-  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
 
   const isUrlValid = useMemo(() => {
     if (!state.linkUrl) return false
@@ -84,6 +71,9 @@ export function AlarmFormPage() {
     )
   }
 
+  // 최소 날짜는 현재 시간
+  const minDate = new Date()
+
   return (
     <div className="min-h-screen bg-background">
       <Header
@@ -118,83 +108,12 @@ export function AlarmFormPage() {
             <Label className="text-sm font-medium">
               발송 시간 <span className="text-red-500">*</span>
             </Label>
-            <div className="flex flex-wrap gap-2">
-              <Select
-                value={state.scheduledYear}
-                onValueChange={actions.setScheduledYear}
-              >
-                <SelectTrigger className="w-[90px]">
-                  <SelectValue placeholder="년" />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year}년
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={state.scheduledMonth}
-                onValueChange={actions.setScheduledMonth}
-              >
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue placeholder="월" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map((month) => (
-                    <SelectItem key={month} value={month}>
-                      {month}월
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={state.scheduledDay}
-                onValueChange={actions.setScheduledDay}
-              >
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue placeholder="일" />
-                </SelectTrigger>
-                <SelectContent>
-                  {days.map((day) => (
-                    <SelectItem key={day} value={day}>
-                      {day}일
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={state.scheduledHour}
-                onValueChange={actions.setScheduledHour}
-              >
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue placeholder="시" />
-                </SelectTrigger>
-                <SelectContent>
-                  {hours.map((hour) => (
-                    <SelectItem key={hour} value={hour}>
-                      {hour}시
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={state.scheduledMinute}
-                onValueChange={actions.setScheduledMinute}
-              >
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue placeholder="분" />
-                </SelectTrigger>
-                <SelectContent>
-                  {minutes.map((minute) => (
-                    <SelectItem key={minute} value={minute}>
-                      {minute}분
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <DateTimePicker
+              value={state.scheduledDate}
+              onChange={actions.setScheduledDate}
+              placeholder="발송 시간을 선택하세요"
+              minDate={minDate}
+            />
             {state.errors.scheduledAt && (
               <p className="text-sm text-red-500">{state.errors.scheduledAt}</p>
             )}

@@ -48,11 +48,7 @@ export interface DeleteNotificationResponse {
 export interface NotificationFormState {
   title: string
   linkUrl: string
-  scheduledYear: string
-  scheduledMonth: string
-  scheduledDay: string
-  scheduledHour: string
-  scheduledMinute: string
+  scheduledDate: Date | undefined
   errors: {
     title?: string
     linkUrl?: string
@@ -63,10 +59,6 @@ export interface NotificationFormState {
 export const initialNotificationFormState: NotificationFormState = {
   title: '',
   linkUrl: '',
-  scheduledYear: '',
-  scheduledMonth: '',
-  scheduledDay: '',
-  scheduledHour: '',
-  scheduledMinute: '',
+  scheduledDate: undefined,
   errors: {},
 }
