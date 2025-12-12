@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { X } from 'lucide-react'
@@ -16,11 +16,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/shared/ui/dialog'
+import { useGetContent } from '@/entities/content'
 import {
   contentFormSchema,
   type ContentFormValues,
   useCreateContent,
 } from '@/features/content/create'
+import { useUpdateContent } from '@/features/content/edit'
 import {
   useDraftState,
   useAutoSave,
@@ -40,16 +42,24 @@ const CATEGORIES = ['일반', '공지', '이벤트', '프로모션']
 
 export function ContentFormPage() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const useDraft = searchParams.get('draft') === 'true'
+
+  const isEditMode = !!id
+  const contentId = id ? Number(id) : undefined
 
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false)
   const [isBackConfirmOpen, setIsBackConfirmOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // 수정 모드: 기존 콘텐츠 조회
+  const { data: existingContent, isLoading: isLoadingContent } = useGetContent(contentId ?? 0)
 
   const { draft, save: saveDraft, clear: clearDraft } = useDraftState({
     authorId: 1, // TODO: Get from auth context
-    loadExisting: useDraft,
+    loadExisting: useDraft && !isEditMode,
   })
 
   const {
@@ -73,16 +83,28 @@ export function ContentFormPage() {
   const categories = watch('categories')
   const linkUrl = watch('linkUrl')
 
-  // Load draft data
+  // 수정 모드: 기존 콘텐츠 데이터 로드
   useEffect(() => {
-    if (useDraft && draft?.data) {
+    if (isEditMode && existingContent && !isInitialized) {
+      setValue('title', existingContent.title)
+      setValue('body', existingContent.body)
+      setValue('categories', existingContent.category.split(',').filter(Boolean))
+      setValue('linkUrl', existingContent.linkUrl || '')
+      setIsInitialized(true)
+    }
+  }, [isEditMode, existingContent, isInitialized, setValue])
+
+  // Load draft data (새 글 작성 시에만)
+  useEffect(() => {
+    if (!isEditMode && useDraft && draft?.data && !isInitialized) {
       const data = draft.data
       if (data.title) setValue('title', data.title)
       if (data.body) setValue('body', data.body)
       if (data.categories) setValue('categories', data.categories)
       if (data.linkUrl) setValue('linkUrl', data.linkUrl)
+      setIsInitialized(true)
     }
-  }, [useDraft, draft, setValue])
+  }, [isEditMode, useDraft, draft, isInitialized, setValue])
 
   // Track changes
   useEffect(() => {
@@ -105,6 +127,7 @@ export function ContentFormPage() {
   })
 
   const { mutateAsync: createContent, isPending: isCreating } = useCreateContent()
+  const { mutateAsync: updateContent, isPending: isUpdating } = useUpdateContent()
   const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContent()
   const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContent()
   const { mutateAsync: createNotification, isPending: isCreatingNotification } = useCreateNotification()
@@ -158,23 +181,36 @@ export function ContentFormPage() {
     if (!isValid) return
 
     try {
-      // 1. 콘텐츠 생성
-      const response = await createContent({
-        title,
-        body,
-        category: categories.join(','),
-        linkUrl: linkUrl || undefined,
-      })
+      let targetContentId: number
 
-      const contentId = response.data.id
+      if (isEditMode && contentId) {
+        // 수정 모드: 콘텐츠 업데이트
+        await updateContent({
+          id: contentId,
+          title,
+          body,
+          category: categories.join(','),
+          linkUrl: linkUrl || undefined,
+        })
+        targetContentId = contentId
+      } else {
+        // 생성 모드: 콘텐츠 생성
+        const response = await createContent({
+          title,
+          body,
+          category: categories.join(','),
+          linkUrl: linkUrl || undefined,
+        })
+        targetContentId = response.data.id
+      }
 
       // 2. 공개 상태에 따른 처리
       if (options.visibility === 'public') {
         // 즉시 공개
-        await publishContent({ id: contentId, status: 'public' })
+        await publishContent({ id: targetContentId, status: 'public' })
       } else if (options.visibility === 'scheduled' && options.scheduledAt) {
         // 예약 발행
-        await scheduleContent({ id: contentId, publishedAt: options.scheduledAt })
+        await scheduleContent({ id: targetContentId, publishedAt: options.scheduledAt })
       }
       // visibility === 'private'인 경우 상태 변경 없음 (기본 draft)
 
@@ -182,14 +218,16 @@ export function ContentFormPage() {
       if (options.sendAlarm && options.alarmTarget && options.alarmTitle) {
         await createNotification({
           title: options.alarmTitle,
-          contentId,
+          contentId: targetContentId,
           targetType: options.alarmTarget,
           scheduledAt: options.scheduledAt, // 예약 발행 시간과 동일
         })
       }
 
       // 완료 처리
-      clearDraft()
+      if (!isEditMode) {
+        clearDraft()
+      }
       setIsPublishModalOpen(false)
       navigate('/')
     } catch (error) {
@@ -207,15 +245,27 @@ export function ContentFormPage() {
     }
   }
 
+  // 수정 모드에서 콘텐츠 로딩 중
+  if (isEditMode && isLoadingContent) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header variant="content-form" onBack={() => navigate('/')} />
+        <div className="flex justify-center py-8">
+          <div className="text-muted-foreground">콘텐츠를 불러오는 중...</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header
         variant="content-form"
         onBack={handleBack}
-        onSaveDraft={handleSaveDraft}
+        onSaveDraft={isEditMode ? undefined : handleSaveDraft}
         onPublish={handlePublishClick}
         isPublishDisabled={!isValid}
-        isPublishing={isCreating || isPublishing || isScheduling || isCreatingNotification}
+        isPublishing={isCreating || isUpdating || isPublishing || isScheduling || isCreatingNotification}
       />
 
       <main className="container max-w-2xl px-4 py-6">
@@ -340,7 +390,7 @@ export function ContentFormPage() {
         onClose={() => setIsPublishModalOpen(false)}
         onPublish={handlePublish}
         contentTitle={title}
-        isLoading={isCreating || isPublishing || isScheduling || isCreatingNotification}
+        isLoading={isCreating || isUpdating || isPublishing || isScheduling || isCreatingNotification}
       />
 
       {/* 뒤로가기 확인 모달 */}
