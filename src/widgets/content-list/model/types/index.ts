@@ -7,4 +7,5 @@ export interface ContentListProps {
 export interface ContentListItemProps {
   content: Content
   onClick?: (id: number) => void
+  onCreateAlarm?: (id: number) => void
 }

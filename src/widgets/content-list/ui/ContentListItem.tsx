@@ -1,8 +1,15 @@
+import { Bell } from 'lucide-react'
+import { Button } from '@/shared/ui/button'
 import type { ContentListItemProps } from '../model/types'
 
-export function ContentListItem({ content, onClick }: ContentListItemProps) {
+export function ContentListItem({ content, onClick, onCreateAlarm }: ContentListItemProps) {
   const handleClick = () => {
     onClick?.(content.id)
+  }
+
+  const handleCreateAlarm = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onCreateAlarm?.(content.id)
   }
 
   const formatDate = (dateString: string) => {
@@ -39,10 +46,21 @@ export function ContentListItem({ content, onClick }: ContentListItemProps) {
           <span className="mt-1">{content.user.email}</span>
         </div>
       </div>
-      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-        <span>조회 {content.stats.viewCount}</span>
-        <span>좋아요 {content.stats.likeCount}</span>
-        <span>댓글 {content.stats.commentCount}</span>
+      <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span>조회 {content.stats.viewCount}</span>
+          <span>좋아요 {content.stats.likeCount}</span>
+          <span>댓글 {content.stats.commentCount}</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCreateAlarm}
+          className="h-7 text-xs"
+        >
+          <Bell className="h-3 w-3 mr-1" />
+          푸시알림 생성
+        </Button>
       </div>
     </article>
   )

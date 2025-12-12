@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { Header } from '@/widgets/header'
 import { Button } from '@/shared/ui/button'
@@ -15,14 +15,22 @@ import {
 } from '@/shared/ui/dialog'
 import { useNotificationFormState } from '@/features/notification/create'
 import { useCreateNotification } from '@/features/notification/create'
+import { useGetContent } from '@/entities/content'
 
 export function AlarmFormPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const contentIdParam = searchParams.get('contentId')
+  const contentId = contentIdParam ? Number(contentIdParam) : undefined
+
   const [isBackConfirmOpen, setIsBackConfirmOpen] = useState(false)
   const [linkInserted, setLinkInserted] = useState(false)
 
-  const { state, scheduledAt, isValid, hasChanges, actions } = useNotificationFormState()
+  const { state, scheduledAt, isValid: isFormValid, hasChanges, actions } = useNotificationFormState()
   const { mutate: createNotification, isPending } = useCreateNotification()
+
+  // contentId가 있으면 해당 콘텐츠 정보 조회
+  const { data: linkedContent } = useGetContent(contentId ?? 0)
 
   const isUrlValid = useMemo(() => {
     if (!state.linkUrl) return false
@@ -33,6 +41,15 @@ export function AlarmFormPage() {
       return false
     }
   }, [state.linkUrl])
+
+  // contentId가 있으면 링크 유효성 검사 건너뜀
+  const isValid = useMemo(() => {
+    if (contentId) {
+      // contentId가 있으면 제목과 시간만 체크
+      return !!state.title && !!state.scheduledDate
+    }
+    return isFormValid
+  }, [contentId, state.title, state.scheduledDate, isFormValid])
 
   const handleBack = () => {
     if (hasChanges) {
@@ -54,12 +71,15 @@ export function AlarmFormPage() {
   }
 
   const handlePublish = () => {
-    if (!actions.validate() || !scheduledAt) return
+    // contentId가 없을 때만 링크 유효성 검사
+    if (!contentId && !actions.validate()) return
+    if (!scheduledAt) return
+    if (!state.title) return
 
     createNotification(
       {
         title: state.title,
-        contentId: 1, // TODO: Get from selected content or link
+        contentId: contentId ?? 1, // contentId가 있으면 사용, 없으면 링크에서 추출 (TODO)
         targetType: 'all',
         scheduledAt,
       },
@@ -119,61 +139,73 @@ export function AlarmFormPage() {
             )}
           </div>
 
-          {/* 링크 입력 */}
-          <div className="space-y-2">
-            <Label htmlFor="linkUrl" className="text-sm font-medium">
-              링크 <span className="text-red-500">*</span>
-            </Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  id="linkUrl"
-                  placeholder="https://example.com"
-                  value={state.linkUrl}
-                  onChange={(e) => {
-                    actions.setLinkUrl(e.target.value)
-                    setLinkInserted(false)
-                  }}
-                  aria-invalid={!!state.errors.linkUrl}
-                />
-                {state.linkUrl && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      actions.clearLinkUrl()
+          {/* 연결된 콘텐츠 또는 링크 입력 */}
+          {contentId && linkedContent ? (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">연결된 콘텐츠</Label>
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm font-medium">{linkedContent.title}</p>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {linkedContent.body}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="linkUrl" className="text-sm font-medium">
+                링크 <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="linkUrl"
+                    placeholder="https://example.com"
+                    value={state.linkUrl}
+                    onChange={(e) => {
+                      actions.setLinkUrl(e.target.value)
                       setLinkInserted(false)
                     }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={!isUrlValid}
-                onClick={handleInsertLink}
-              >
-                삽입
-              </Button>
-            </div>
-            {state.errors.linkUrl && (
-              <p className="text-sm text-red-500">{state.errors.linkUrl}</p>
-            )}
-            {linkInserted && isUrlValid && (
-              <div className="p-3 bg-muted rounded-md">
-                <a
-                  href={state.linkUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline break-all"
+                    aria-invalid={!!state.errors.linkUrl}
+                  />
+                  {state.linkUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        actions.clearLinkUrl()
+                        setLinkInserted(false)
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!isUrlValid}
+                  onClick={handleInsertLink}
                 >
-                  {state.linkUrl}
-                </a>
+                  삽입
+                </Button>
               </div>
-            )}
-          </div>
+              {state.errors.linkUrl && (
+                <p className="text-sm text-red-500">{state.errors.linkUrl}</p>
+              )}
+              {linkInserted && isUrlValid && (
+                <div className="p-3 bg-muted rounded-md">
+                  <a
+                    href={state.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline break-all"
+                  >
+                    {state.linkUrl}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
 

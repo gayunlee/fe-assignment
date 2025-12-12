@@ -43,6 +43,10 @@ export function ContentList({ category }: ContentListProps) {
     navigate(`/content/${id}/edit`)
   }
 
+  const handleCreateAlarm = (contentId: number) => {
+    navigate(`/alarm/new?contentId=${contentId}`)
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
@@ -78,6 +82,7 @@ export function ContentList({ category }: ContentListProps) {
           key={content.id}
           content={content}
           onClick={handleContentClick}
+          onCreateAlarm={handleCreateAlarm}
         />
       ))}
       <div ref={observerRef} className="h-4" />
