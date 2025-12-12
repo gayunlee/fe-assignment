@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { format } from "date-fns"
+import { format, isSameDay, startOfDay } from "date-fns"
 import { ko } from "date-fns/locale"
 import { CalendarIcon, ChevronDown, ChevronUp } from "lucide-react"
 
@@ -36,6 +36,26 @@ export function DateTimePicker({
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const minutes = Array.from({ length: 60 }, (_, i) => i)
 
+  // 오늘인지 확인하고 현재 시간 이전은 비활성화
+  const now = new Date()
+  const isToday = value ? isSameDay(value, now) : false
+  const currentHour = now.getHours()
+  const currentMinute = now.getMinutes()
+
+  const isHourDisabled = (hour: number) => {
+    if (!isToday) return false
+    return hour < currentHour
+  }
+
+  const isMinuteDisabled = (minute: number) => {
+    if (!isToday) return false
+    if (!value) return false
+    const selectedHour = value.getHours()
+    if (selectedHour > currentHour) return false
+    if (selectedHour === currentHour) return minute <= currentMinute
+    return true
+  }
+
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) {
       onChange?.(undefined)
@@ -43,6 +63,9 @@ export function DateTimePicker({
     }
 
     const newDate = new Date(date)
+    const now = new Date()
+    const isSelectedToday = isSameDay(date, now)
+
     if (value) {
       newDate.setHours(value.getHours())
       newDate.setMinutes(value.getMinutes())
@@ -52,6 +75,12 @@ export function DateTimePicker({
     }
     newDate.setSeconds(0)
     newDate.setMilliseconds(0)
+
+    // 오늘 선택 시 현재 시간 이전이면 현재 시간 + 1분으로 조정
+    if (isSelectedToday && newDate <= now) {
+      newDate.setHours(now.getHours())
+      newDate.setMinutes(now.getMinutes() + 1)
+    }
 
     onChange?.(newDate)
   }
@@ -106,7 +135,7 @@ export function DateTimePicker({
             mode="single"
             selected={value}
             onSelect={handleDateSelect}
-            disabled={(date) => minDate ? date < minDate : false}
+            disabled={(date) => minDate ? startOfDay(date) < startOfDay(minDate) : false}
             locale={ko}
             className="rounded-md"
           />
@@ -119,9 +148,13 @@ export function DateTimePicker({
               <SelectTrigger className="w-[80px]">
                 <SelectValue placeholder="시" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[200px] overflow-y-auto">
                 {hours.map((hour) => (
-                  <SelectItem key={hour} value={String(hour)}>
+                  <SelectItem
+                    key={hour}
+                    value={String(hour)}
+                    disabled={isHourDisabled(hour)}
+                  >
                     {String(hour).padStart(2, "0")}시
                   </SelectItem>
                 ))}
@@ -135,9 +168,13 @@ export function DateTimePicker({
               <SelectTrigger className="w-[80px]">
                 <SelectValue placeholder="분" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[200px] overflow-y-auto">
                 {minutes.map((minute) => (
-                  <SelectItem key={minute} value={String(minute)}>
+                  <SelectItem
+                    key={minute}
+                    value={String(minute)}
+                    disabled={isMinuteDisabled(minute)}
+                  >
                     {String(minute).padStart(2, "0")}분
                   </SelectItem>
                 ))}

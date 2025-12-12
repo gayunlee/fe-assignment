@@ -17,6 +17,7 @@ import {
   useNotificationFormState,
   useCreateNotification,
   useUpdateNotification,
+  useScheduleNotification,
   type NotificationFormInitialValues,
 } from '@/features/notification/create'
 import { useGetContent, type Content } from '@/entities/content'
@@ -44,8 +45,9 @@ function AlarmForm({
     useNotificationFormState(initialValues)
   const { mutate: createNotification, isPending: isCreating } = useCreateNotification()
   const { mutate: updateNotification, isPending: isUpdating } = useUpdateNotification()
+  const { mutate: scheduleNotification, isPending: isScheduling } = useScheduleNotification()
 
-  const isPending = isCreating || isUpdating
+  const isPending = isCreating || isUpdating || isScheduling
 
   const handleBack = () => {
     if (hasChanges) {
@@ -75,7 +77,18 @@ function AlarmForm({
         },
         {
           onSuccess: () => {
-            navigate('/')
+            // 스케줄 수정 요청
+            scheduleNotification(
+              {
+                id: notificationId,
+                scheduledAt,
+              },
+              {
+                onSuccess: () => {
+                  navigate('/')
+                },
+              }
+            )
           },
         }
       )
