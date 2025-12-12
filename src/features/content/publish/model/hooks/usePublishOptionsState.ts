@@ -143,7 +143,15 @@ export function usePublishOptionsState(options: UsePublishOptionsStateOptions = 
       return null
     }
 
-    return `${state.scheduledYear}-${state.scheduledMonth.padStart(2, '0')}-${state.scheduledDay.padStart(2, '0')}T${state.scheduledHour.padStart(2, '0')}:${state.scheduledMinute.padStart(2, '0')}:00`
+    // 로컬 타임존 오프셋 계산 (예: +09:00)
+    const date = new Date(
+      Number(state.scheduledYear),
+      Number(state.scheduledMonth) - 1,
+      Number(state.scheduledDay),
+      Number(state.scheduledHour),
+      Number(state.scheduledMinute)
+    )
+    return date.toISOString()
   }, [
     state.scheduledYear,
     state.scheduledMonth,
