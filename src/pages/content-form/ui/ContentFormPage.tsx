@@ -86,10 +86,10 @@ export function ContentFormPage() {
   // 수정 모드: 기존 콘텐츠 데이터 로드
   useEffect(() => {
     if (isEditMode && existingContent && !isInitialized) {
-      setValue('title', existingContent.title)
-      setValue('body', existingContent.body)
-      setValue('categories', existingContent.category.split(',').filter(Boolean))
-      setValue('linkUrl', existingContent.linkUrl || '')
+      setValue('title', existingContent.title, { shouldValidate: true })
+      setValue('body', existingContent.body, { shouldValidate: true })
+      setValue('categories', existingContent.category.split(',').filter(Boolean), { shouldValidate: true })
+      setValue('linkUrl', existingContent.linkUrl || '', { shouldValidate: true })
       setIsInitialized(true)
     }
   }, [isEditMode, existingContent, isInitialized, setValue])
@@ -98,10 +98,10 @@ export function ContentFormPage() {
   useEffect(() => {
     if (!isEditMode && useDraft && draft?.data && !isInitialized) {
       const data = draft.data
-      if (data.title) setValue('title', data.title)
-      if (data.body) setValue('body', data.body)
-      if (data.categories) setValue('categories', data.categories)
-      if (data.linkUrl) setValue('linkUrl', data.linkUrl)
+      if (data.title) setValue('title', data.title, { shouldValidate: true })
+      if (data.body) setValue('body', data.body, { shouldValidate: true })
+      if (data.categories) setValue('categories', data.categories, { shouldValidate: true })
+      if (data.linkUrl) setValue('linkUrl', data.linkUrl, { shouldValidate: true })
       setIsInitialized(true)
     }
   }, [isEditMode, useDraft, draft, isInitialized, setValue])
