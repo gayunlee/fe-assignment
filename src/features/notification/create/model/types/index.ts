@@ -19,6 +19,32 @@ export interface CreateNotificationResponse {
   data: Notification
 }
 
+export interface UpdateNotificationRequest {
+  id: number
+  title?: string
+  contentId?: number
+  targetType?: NotificationTarget
+}
+
+export interface UpdateNotificationApiRequest {
+  title?: string
+  content_id?: number
+  target_type?: NotificationTarget
+}
+
+export interface UpdateNotificationResponse {
+  success: boolean
+  data: Notification
+}
+
+export interface DeleteNotificationRequest {
+  id: number
+}
+
+export interface DeleteNotificationResponse {
+  success: boolean
+}
+
 export interface NotificationFormState {
   title: string
   linkUrl: string

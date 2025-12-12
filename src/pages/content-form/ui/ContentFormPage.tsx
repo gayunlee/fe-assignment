@@ -26,7 +26,14 @@ import {
   useAutoSave,
   type ContentFormData,
 } from '@/features/content/draft'
-import { PublishModal, usePublishContent } from '@/features/content/publish'
+import {
+  PublishModal,
+  usePublishContent,
+  useScheduleContent,
+  type Visibility,
+  type NotificationTarget,
+} from '@/features/content/publish'
+import { useCreateNotification } from '@/features/notification/create'
 import { VALIDATION } from '@/shared/config/constants'
 
 const CATEGORIES = ['일반', '공지', '이벤트', '프로모션']
@@ -97,8 +104,10 @@ export function ContentFormPage() {
     enabled: hasUnsavedChanges,
   })
 
-  const { mutate: createContent, isPending: isCreating } = useCreateContent()
-  const { mutate: publishContent, isPending: isPublishing } = usePublishContent()
+  const { mutateAsync: createContent, isPending: isCreating } = useCreateContent()
+  const { mutateAsync: publishContent, isPending: isPublishing } = usePublishContent()
+  const { mutateAsync: scheduleContent, isPending: isScheduling } = useScheduleContent()
+  const { mutateAsync: createNotification, isPending: isCreatingNotification } = useCreateNotification()
 
   const handleCategoryToggle = (category: string) => {
     const current = categories
@@ -138,42 +147,54 @@ export function ContentFormPage() {
     setIsPublishModalOpen(true)
   }
 
-  const handlePublish = (options: {
-    visibility: 'public' | 'private' | 'scheduled'
+  const handlePublish = async (options: {
+    visibility: Visibility
     scheduledAt?: string
     sendAlarm: boolean
+    alarmTarget?: NotificationTarget
+    alarmTitle?: string
+    alarmBody?: string
   }) => {
     if (!isValid) return
 
-    createContent(
-      {
+    try {
+      // 1. 콘텐츠 생성
+      const response = await createContent({
         title,
         body,
         category: categories.join(','),
         linkUrl: linkUrl || undefined,
-      },
-      {
-        onSuccess: (response) => {
-          const contentId = response.data.id
-          if (options.visibility !== 'private') {
-            publishContent(
-              { id: contentId, status: 'public' },
-              {
-                onSuccess: () => {
-                  clearDraft()
-                  setIsPublishModalOpen(false)
-                  navigate('/')
-                },
-              }
-            )
-          } else {
-            clearDraft()
-            setIsPublishModalOpen(false)
-            navigate('/')
-          }
-        },
+      })
+
+      const contentId = response.data.id
+
+      // 2. 공개 상태에 따른 처리
+      if (options.visibility === 'public') {
+        // 즉시 공개
+        await publishContent({ id: contentId, status: 'public' })
+      } else if (options.visibility === 'scheduled' && options.scheduledAt) {
+        // 예약 발행
+        await scheduleContent({ id: contentId, publishedAt: options.scheduledAt })
       }
-    )
+      // visibility === 'private'인 경우 상태 변경 없음 (기본 draft)
+
+      // 3. 알람 발송 설정
+      if (options.sendAlarm && options.alarmTarget && options.alarmTitle) {
+        await createNotification({
+          title: options.alarmTitle,
+          contentId,
+          targetType: options.alarmTarget,
+          scheduledAt: options.scheduledAt, // 예약 발행 시간과 동일
+        })
+      }
+
+      // 완료 처리
+      clearDraft()
+      setIsPublishModalOpen(false)
+      navigate('/')
+    } catch (error) {
+      console.error('발행 중 오류 발생:', error)
+    }
   }
 
   const isUrlValid = (url: string) => {
@@ -194,7 +215,7 @@ export function ContentFormPage() {
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublishClick}
         isPublishDisabled={!isValid}
-        isPublishing={isCreating || isPublishing}
+        isPublishing={isCreating || isPublishing || isScheduling || isCreatingNotification}
       />
 
       <main className="container max-w-2xl px-4 py-6">
@@ -319,7 +340,7 @@ export function ContentFormPage() {
         onClose={() => setIsPublishModalOpen(false)}
         onPublish={handlePublish}
         contentTitle={title}
-        isLoading={isCreating || isPublishing}
+        isLoading={isCreating || isPublishing || isScheduling || isCreatingNotification}
       />
 
       {/* 뒤로가기 확인 모달 */}
