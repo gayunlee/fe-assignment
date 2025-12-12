@@ -1,11 +1,12 @@
 import type { Content } from '@/entities/content'
 
 export interface ContentListProps {
-  category?: string
+  className?: string
 }
 
 export interface ContentListItemProps {
   content: Content
+  index: number
   onClick?: (id: number) => void
   onCreateAlarm?: (id: number) => void
 }

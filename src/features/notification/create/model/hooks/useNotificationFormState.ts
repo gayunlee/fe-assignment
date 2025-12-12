@@ -62,15 +62,7 @@ export function useNotificationFormState(initialValues?: NotificationFormInitial
     if (!state.scheduledDate) {
       return null
     }
-    // UTC 변환 없이 로컬 시간 그대로 전송
-    const d = state.scheduledDate
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    const hours = String(d.getHours()).padStart(2, '0')
-    const minutes = String(d.getMinutes()).padStart(2, '0')
-    const seconds = String(d.getSeconds()).padStart(2, '0')
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+    return state.scheduledDate.toISOString()
   }, [state.scheduledDate])
 
   const isValid = useMemo(() => {

@@ -11,10 +11,9 @@ interface NewPostModalProps {
   isOpen: boolean
   onClose: () => void
   onSelectContent: (useDraft: boolean) => void
-  onSelectAlarm: () => void
 }
 
-export function NewPostModal({ isOpen, onClose, onSelectContent, onSelectAlarm }: NewPostModalProps) {
+export function NewPostModal({ isOpen, onClose, onSelectContent }: NewPostModalProps) {
   const hasDraft = checkHasDraft()
   const draft = hasDraft ? loadDraft() : null
 
@@ -64,19 +63,6 @@ export function NewPostModal({ isOpen, onClose, onSelectContent, onSelectAlarm }
               </div>
             </Button>
           )}
-
-          <Button
-            variant="outline"
-            className="w-full justify-start h-auto py-3 px-4"
-            onClick={onSelectAlarm}
-          >
-            <div className="text-left">
-              <div className="font-medium">새 알람 쓰기</div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                새로운 알람을 작성합니다
-              </div>
-            </div>
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

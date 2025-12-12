@@ -53,13 +53,13 @@ function AlarmForm({
     if (hasChanges) {
       setIsBackConfirmOpen(true)
     } else {
-      navigate('/')
+      navigate('/?tab=alarm')
     }
   }
 
   const handleConfirmBack = () => {
     setIsBackConfirmOpen(false)
-    navigate('/')
+    navigate('/?tab=alarm')
   }
 
   const handlePublish = () => {
@@ -85,7 +85,7 @@ function AlarmForm({
               },
               {
                 onSuccess: () => {
-                  navigate('/')
+                  navigate('/?tab=alarm')
                 },
               }
             )
@@ -102,7 +102,7 @@ function AlarmForm({
         },
         {
           onSuccess: () => {
-            navigate('/')
+            navigate('/?tab=alarm')
           },
         }
       )

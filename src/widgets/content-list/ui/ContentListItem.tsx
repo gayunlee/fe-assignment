@@ -2,7 +2,12 @@ import { Bell } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import type { ContentListItemProps } from '../model/types'
 
-export function ContentListItem({ content, onClick, onCreateAlarm }: ContentListItemProps) {
+export function ContentListItem({
+  content,
+  index,
+  onClick,
+  onCreateAlarm,
+}: ContentListItemProps) {
   const handleClick = () => {
     onClick?.(content.id)
   }
@@ -12,7 +17,8 @@ export function ContentListItem({ content, onClick, onCreateAlarm }: ContentList
     onCreateAlarm?.(content.id)
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '-'
     const date = new Date(dateString)
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -21,47 +27,46 @@ export function ContentListItem({ content, onClick, onCreateAlarm }: ContentList
     })
   }
 
+  const getStatusLabel = (status: 'public' | 'private') => {
+    return status === 'public' ? '공개' : '비공개'
+  }
+
   return (
-    <article
-      className="p-4 border-b hover:bg-muted/50 cursor-pointer transition-colors"
+    <tr
+      className="hover:bg-muted/50 cursor-pointer transition-colors"
       onClick={handleClick}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
-              {content.category}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {content.status === 'public' ? '공개' : '비공개'}
-            </span>
-          </div>
-          <h3 className="font-medium text-sm line-clamp-1">{content.title}</h3>
-          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-            {content.body}
-          </p>
+      <td className="py-3 px-4 text-sm text-center text-muted-foreground">
+        {index + 1}
+      </td>
+      <td className="py-3 px-4 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="line-clamp-1">{content.title}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCreateAlarm}
+            className="h-6 text-xs shrink-0"
+          >
+            <Bell className="h-3 w-3 mr-1" />
+            푸시알림
+          </Button>
         </div>
-        <div className="flex flex-col items-end text-xs text-muted-foreground">
-          <span>{formatDate(content.createdAt)}</span>
-          <span className="mt-1">{content.user.email}</span>
-        </div>
-      </div>
-      <div className="flex items-center justify-between mt-2">
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span>조회 {content.stats.viewCount}</span>
-          <span>좋아요 {content.stats.likeCount}</span>
-          <span>댓글 {content.stats.commentCount}</span>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleCreateAlarm}
-          className="h-7 text-xs"
+      </td>
+      <td className="py-3 px-4 text-sm text-center text-muted-foreground">
+        {formatDate(content.publishedAt)}
+      </td>
+      <td className="py-3 px-4 text-sm text-center">
+        <span
+          className={`px-2 py-1 rounded-full text-xs ${
+            content.status === 'public'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-700'
+          }`}
         >
-          <Bell className="h-3 w-3 mr-1" />
-          푸시알림 생성
-        </Button>
-      </div>
-    </article>
+          {getStatusLabel(content.status)}
+        </span>
+      </td>
+    </tr>
   )
 }
